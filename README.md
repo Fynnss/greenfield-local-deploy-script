@@ -16,5 +16,6 @@ MYSQL_PORT=3306
 ## Command
 ```shell
 # 1 validator and 7 storage provider
-bash localup_all.sh 1 7
+bash localup_all.sh start 1 7
+bash localup_all.sh stop
 ```
