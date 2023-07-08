@@ -8,7 +8,7 @@ source ${workspace}/.env
 gnfddir=${workspace}/greenfield
 spdir=${workspace}/greenfield-storage-provider
 
-function start {
+function deploy {
   valnum=$1
   spnum=$2
   echo "Deploying ${valnum} validator and ${spnum} storage providers"
@@ -39,18 +39,31 @@ function start {
   make build
   
   # run greenfield
-  echo "----------------run greenfield blockchain ------------------------------"
+  echo "----------------deploy greenfield blockchain ------------------------------"
   cd ${gnfddir}
-  bash ./deployment/localup/localup.sh all ${valnum} ${spnum}
+  bash ./deployment/localup/localup.sh init ${valnum} ${spnum}
+  bash ./deployment/localup/localup.sh generate ${valnum} ${spnum}
   bash ./deployment/localup/localup.sh export_sps ${valnum} ${spnum} > sp.json
   cat sp.json
   
   # run greenfield-storage-provider
-  echo "----------------run greenfield storage provider ------------------------------"
+  echo "----------------deploy greenfield storage provider ------------------------------"
   cd ${spdir}
   sed -i -e "s/SP_NUM=[0-9]/SP_NUM=${spnum}/g" ${spdir}/deployment/localup/env.info
   bash ./deployment/localup/localup.sh --generate ${gnfddir}/sp.json ${MYSQL_USER} ${MYSQL_PASSWORD} ${MYSQL_IP}:${MYSQL_PORT}
   bash ./deployment/localup/localup.sh --reset
+}
+
+function start {
+  valnum=$1
+  spnum=$2
+
+  echo "----------------run greenfield ------------------------------"
+  cd ${gnfddir}
+  bash ./deployment/localup/localup.sh start ${valnum} ${spnum}
+  
+  echo "----------------run greenfield storage provider ------------------------------"
+  cd ${spdir}
   bash ./deployment/localup/localup.sh --start
   
   sleep 10
@@ -74,6 +87,12 @@ if [ ! -z $3 ] && [ "$3" -gt "0" ]; then
 fi
 
 case ${CMD} in
+
+deploy)
+    echo "===== deploy ===="
+    deploy ${SIZE} ${SP_SIZE}
+    echo "===== end ===="
+  ;;
 start)
     echo "===== start ===="
     start ${SIZE} ${SP_SIZE}
